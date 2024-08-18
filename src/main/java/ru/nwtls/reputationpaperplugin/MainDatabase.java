@@ -13,6 +13,21 @@ public class MainDatabase {
     private final String login;
     private final String password;
 
+    public enum TableName {
+        PLAYERS_TABLE,
+        GOODREPS_TABLE,
+        BADREPS_TABLE
+    }
+
+    //temp or idk
+    public enum TablesColumn {
+        TARGET_COLUMN,
+        AUTHOR_COLUMN,
+        UUID_COLUMN,
+        GOODREP_COLUMN,
+        BADREP_COLUMN
+    }
+
     public MainDatabase(@NotNull String url, @NotNull String login, @NotNull String password) {
         this.url = url;
         this.login = login;
@@ -56,9 +71,6 @@ public class MainDatabase {
             if (isExists(uuid)) return;
             String query = "INSERT INTO `players` (uuid, goodrep, badrep) VALUES (?, ?, ?);";
             PreparedStatement statement = connection.prepareStatement(query);
-
-            //TODO: PreparedStatement updateStatement(List<Object> list):
-            //      .stream().map(statement.set{type of object}(id, object))
             statement.setString(1, uuid.toString());
             statement.setInt(2, 0);
             statement.setInt(3, 0);
@@ -72,6 +84,7 @@ public class MainDatabase {
     public void addGoodRep(@NotNull UUID targetUUID, @NotNull UUID authorUUID) {
         try (Connection connection = getConnection()) {
             if (!(isExists(targetUUID))) addPlayer(targetUUID);
+
             String query = "UPDATE `players` SET `goodrep`= goodrep + 1 WHERE uuid=?;";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, targetUUID.toString());
@@ -79,6 +92,10 @@ public class MainDatabase {
         } catch (SQLException e) {
             //заглушка
             logger.warning(e.getMessage());
+        }
+
+        try (Connection connection = getConnection()) {
+
         }
 
         try (Connection connection = getConnection()){
@@ -112,16 +129,32 @@ public class MainDatabase {
         return -1;
     }
 
-    public void getBadRep(@NotNull UUID targetUUID, @NotNull UUID authorUUID) {
-
+    public int getBadRep(@NotNull UUID targetUUID) {
+        try (Connection connection = getConnection()) {
+            String query = "SELECT * FROM players WHERE uuid = ?;";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, targetUUID.toString());
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getShort("badrep");
+            }
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+        }
+        return -1;
     }
 
-    public boolean isExists(@NotNull UUID uuid) {
+    public boolean isExists(@NotNull TableName table, @NotNull TablesColumn column, @NotNull String param) {
         boolean result = false;
+
         try (Connection connection = getConnection()) {
-            String query = "SELECT * FROM `players` WHERE `uuid`=?;";
+            String query = "SELECT * FROM ? WHERE ? = ?;";
             PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, uuid.toString());
+
+            statement.setString(1, table.toString().toLowerCase().replace("_table", ""));
+            statement.setString(2, column.toString().toLowerCase().replace("_column", ""));
+            statement.setString(3, param);
+
             ResultSet resultSet = statement.executeQuery();
             result = resultSet.next();
         } catch (SQLException e) {
@@ -131,8 +164,25 @@ public class MainDatabase {
         return result;
     }
 
-    //вот это уже в handle()
-    //public boolean hasPreviousDecision(@NotNull String )
+    public boolean isExists(@NotNull TableName table, @NotNull TablesColumn column, @NotNull Integer param) {
+        boolean result = false;
+
+        try (Connection connection = getConnection()) {
+            String query = "SELECT * FROM ? WHERE ? = ?;";
+            PreparedStatement statement = connection.prepareStatement(query);
+
+            statement.setString(1, table.toString().toLowerCase().replace("_table", ""));
+            statement.setString(2, column.toString().toLowerCase().replace("_column", ""));
+            statement.setInt(3, param);
+
+            ResultSet resultSet = statement.executeQuery();
+            result = resultSet.next();
+        } catch (SQLException e) {
+            //заглушка
+            logger.warning(e.getMessage());
+        }
+        return result;
+    }
 
     private void initializeTables(@NotNull List<String> tablesName, @NotNull HashMap<String, String> tables) {
         for (String name : tablesName) {

@@ -53,7 +53,7 @@ public class ReputationTypeArgument<C> extends CommandArgument<C, ReputationComm
             return output;
         }
 
-        public static final class ReputationTypeParseException extends ParserException {
+        private static final class ReputationTypeParseException extends ParserException {
             public ReputationTypeParseException(final @NonNull String input, final @NonNull CommandContext<?> context) {
                 super(ReputationTypeArgument.ReputationTypeParser.class, context, BukkitCaptionKeys.ARGUMENT_PARSE_FAILURE_PLAYER, CaptionVariable.of("input", input));
             }

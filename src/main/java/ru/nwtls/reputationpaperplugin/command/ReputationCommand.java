@@ -39,7 +39,11 @@ public class ReputationCommand {
 
     private static void handle(@NotNull Player author, @NotNull ReputationType type, @NotNull Player target) {
         if(hasPreviousDecision(target, author, type)) { author.sendMessage(green("Вы уже оценили этого игрока")); return; }
-        if(author.getUniqueId() == target.getUniqueId()) { author.sendMessage(green("Круто, что вы хорошего мнения о себе")); return; }
+        if(author.getUniqueId() == target.getUniqueId()) { author.sendMessage(green("К сожалению, самого себя нельзя оценивать")); return; }
+
+        switch (type) {
+            case GOOD_REPUTATION:
+        }
         mainDatabase.addGoodRep(target.getUniqueId(), author.getUniqueId());
         author.sendMessage(green("Cur good rep of player: " + mainDatabase.getGoodRep(target.getUniqueId())));
     }
@@ -71,9 +75,6 @@ public class ReputationCommand {
                 } catch (SQLException e) {
                     logger.warning(e.getMessage());
                 }
-            default:
-                //сюда надо чета написать
-                break;
         }
         return result;
     }

@@ -36,7 +36,6 @@ public class PluginMain extends JavaPlugin {
                 getConfig().getString("main-database.password")
         );
         mainDatabase.init();
-        System.out.println(mainDatabase);
         Bukkit.getPluginManager().registerEvents(new EventListener(), this);
         try {
             PaperCommandManager<CommandSender> commandManager = PaperCommandManager

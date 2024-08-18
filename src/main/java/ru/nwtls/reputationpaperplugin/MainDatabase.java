@@ -1,6 +1,5 @@
 package ru.nwtls.reputationpaperplugin;
 
-import org.checkerframework.checker.units.qual.N;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.*;
@@ -8,12 +7,11 @@ import java.util.*;
 import java.util.logging.Logger;
 
 public class MainDatabase {
-    private final @NotNull PluginMain plugin = PluginMain.getInstance();
     private final @NotNull Logger logger = PluginMain.getInstance().getLogger();
 
-    private String url;
-    private String login;
-    private String password;
+    private final String url;
+    private final String login;
+    private final String password;
 
     public MainDatabase(@NotNull String url, @NotNull String login, @NotNull String password) {
         this.url = url;
@@ -71,27 +69,50 @@ public class MainDatabase {
         }
     }
 
-    public void addGoodRep(@NotNull UUID uuid) {
+    public void addGoodRep(@NotNull UUID targetUUID, @NotNull UUID authorUUID) {
         try (Connection connection = getConnection()) {
-            if (!(isExists(uuid))) addPlayer(uuid);
-            String query = "UPDATE `players` SET `goodrep`= goodrep - 1 WHERE name=?;";
+            if (!(isExists(targetUUID))) addPlayer(targetUUID);
+            String query = "UPDATE `players` SET `goodrep`= goodrep + 1 WHERE uuid=?;";
             PreparedStatement statement = connection.prepareStatement(query);
-
+            statement.setString(1, targetUUID.toString());
+            statement.executeUpdate();
         } catch (SQLException e) {
             //заглушка
             logger.warning(e.getMessage());
         }
+
+        try (Connection connection = getConnection()){
+            if (!(isExists(targetUUID))) addPlayer(targetUUID);
+            String query = "INSERT INTO `goodreps` (target, author) VALUES (?, ?);";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, targetUUID.toString());
+            statement.setString(2, authorUUID.toString());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+        }
     }
 
-    public void addBadRep(@NotNull UUID uuid) {
+    public void addBadRep(@NotNull UUID targetUUID, @NotNull UUID authorUUID) {
 
     }
 
-    public void getGoodRep(@NotNull UUID uuid) {
-
+    public int getGoodRep(@NotNull UUID targetUUID) {
+        try (Connection connection = getConnection()) {
+            String query = "SELECT * FROM players WHERE uuid = ?;";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, targetUUID.toString());
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getShort("goodrep");
+            }
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+        }
+        return -1;
     }
 
-    public void getBadRep(@NotNull UUID uuid) {
+    public void getBadRep(@NotNull UUID targetUUID, @NotNull UUID authorUUID) {
 
     }
 

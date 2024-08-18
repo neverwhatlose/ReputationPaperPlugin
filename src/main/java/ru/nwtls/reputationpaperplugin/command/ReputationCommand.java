@@ -1,9 +1,9 @@
 package ru.nwtls.reputationpaperplugin.command;
 
-import cloud.commandframework.arguments.standard.StringArgument;
 import cloud.commandframework.bukkit.parsers.PlayerArgument;
 import cloud.commandframework.paper.PaperCommandManager;
-import com.destroystokyo.paper.entity.villager.ReputationType;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +35,27 @@ public class ReputationCommand {
                 .senderType(Player.class)
                 .handler(ctx -> handle((Player) ctx.getSender(), ctx.get("type"), ctx.get("target")))
         );
+
+        manager.command(manager
+                .commandBuilder("goodrep")
+                .argument(PlayerArgument.<CommandSender>builder("target").asRequired())
+                .senderType(Player.class)
+                .handler(ctx -> handle((Player) ctx.getSender(), ReputationType.GOOD_REPUTATION, ctx.get("target")))
+        );
+
+        manager.command(manager
+                .commandBuilder("badrep")
+                .argument(PlayerArgument.<CommandSender>builder("target").asRequired())
+                .senderType(Player.class)
+                .handler(ctx -> handle((Player) ctx.getSender(), ReputationType.BAD_REPUTATION, ctx.get("target")))
+        );
+
+        manager.command(manager
+                .commandBuilder("checkrep")
+                .argument(PlayerArgument.<CommandSender>builder("target").asRequired())
+                .senderType(Player.class)
+                .handler(ctx -> handle((Player) ctx.getSender(), ctx.get("target")))
+        );
     }
 
     private static void handle(@NotNull Player author, @NotNull ReputationType type, @NotNull Player target) {
@@ -42,10 +63,42 @@ public class ReputationCommand {
         if(author.getUniqueId() == target.getUniqueId()) { author.sendMessage(green("К сожалению, самого себя нельзя оценивать")); return; }
 
         switch (type) {
-            case GOOD_REPUTATION:
+            case GOOD_REPUTATION -> {
+                mainDatabase.addGoodRep(target.getUniqueId(), author.getUniqueId());
+                author.sendMessage(single(
+                        gray("Вы изменили репутацию "),
+                        yellow(target.getName()),
+                        gray(" на "),
+                        green("+1!")
+                ));
+                Bukkit.broadcast(single(green("Репутация игрока " + target.getName() + " была изменена на +1 "), getTotalReputation(target)));
+            }
+            case BAD_REPUTATION -> {
+                mainDatabase.addBadRep(target.getUniqueId(), author.getUniqueId());
+                author.sendMessage(single(
+                        gray("Вы изменили репутацию "),
+                        yellow(target.getName()),
+                        gray(" на "),
+                        red("-1!")
+                ));
+                Bukkit.broadcast(single(red("Репутация игрока " + target.getName() + " была изменена на -1 "), getTotalReputation(target)));
+            }
         }
-        mainDatabase.addGoodRep(target.getUniqueId(), author.getUniqueId());
-        author.sendMessage(green("Cur good rep of player: " + mainDatabase.getGoodRep(target.getUniqueId())));
+    }
+
+    private static void handle(@NotNull Player author, @NotNull Player target) {
+        int badrep = mainDatabase.getBadRep(target.getUniqueId());
+        int goodrep = mainDatabase.getGoodRep(target.getUniqueId());
+
+        Component msg = single(
+                gray(target.getName()),
+                yellow(" имеет репутацию: "),
+                green(goodrep),
+                gray("/"),
+                red(badrep),
+                getTotalReputation(target)
+                );
+        author.sendMessage(msg);
     }
 
     private static boolean hasPreviousDecision(@NotNull Player target, @NotNull Player author, @NotNull ReputationType type) {
@@ -77,5 +130,9 @@ public class ReputationCommand {
                 }
         }
         return result;
+    }
+
+    private static @NotNull Component getTotalReputation(@NotNull Player player) {
+        return gray("(" + (mainDatabase.getGoodRep(player.getUniqueId()) - mainDatabase.getBadRep(player.getUniqueId())) + ")");
     }
 }

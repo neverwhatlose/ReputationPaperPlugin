@@ -68,22 +68,25 @@ public class MainDatabase {
 
     public void addPlayer(@NotNull UUID uuid) {
         try (Connection connection = getConnection()) {
-            if (isExists(uuid)) return;
+            if (isExists(TableName.PLAYERS_TABLE, TablesColumn.UUID_COLUMN, uuid.toString())) return;
+
             String query = "INSERT INTO `players` (uuid, goodrep, badrep) VALUES (?, ?, ?);";
             PreparedStatement statement = connection.prepareStatement(query);
+
             statement.setString(1, uuid.toString());
             statement.setInt(2, 0);
             statement.setInt(3, 0);
+
             statement.executeUpdate();
         } catch (SQLException e) {
             //заглушка
-            logger.warning(e.getMessage());
+            logger.warning("addPlayer: " + e.getMessage());
         }
     }
 
     public void addGoodRep(@NotNull UUID targetUUID, @NotNull UUID authorUUID) {
         try (Connection connection = getConnection()) {
-            if (!(isExists(targetUUID))) addPlayer(targetUUID);
+            if (!(isExists(TableName.PLAYERS_TABLE, TablesColumn.UUID_COLUMN, targetUUID.toString()))) addPlayer(targetUUID);
 
             String query = "UPDATE `players` SET `goodrep`= goodrep + 1 WHERE uuid=?;";
             PreparedStatement statement = connection.prepareStatement(query);
@@ -91,27 +94,96 @@ public class MainDatabase {
             statement.executeUpdate();
         } catch (SQLException e) {
             //заглушка
-            logger.warning(e.getMessage());
-        }
-
-        try (Connection connection = getConnection()) {
-
+            logger.warning("addGoodRep/UPDATE: " + e.getMessage());
         }
 
         try (Connection connection = getConnection()){
-            if (!(isExists(targetUUID))) addPlayer(targetUUID);
+            if (!(isExists(TableName.PLAYERS_TABLE, TablesColumn.UUID_COLUMN, targetUUID.toString()))) addPlayer(targetUUID);
+
             String query = "INSERT INTO `goodreps` (target, author) VALUES (?, ?);";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, targetUUID.toString());
             statement.setString(2, authorUUID.toString());
             statement.executeUpdate();
         } catch (SQLException e) {
-            logger.warning(e.getMessage());
+            logger.warning("addGoodRep/INSERT: " + e.getMessage());
+        }
+
+        try (Connection connection = getConnection()) {
+            if (!(isExists(TableName.BADREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.AUTHOR_COLUMN, authorUUID.toString()))) return;
+
+            String query = "DELETE FROM `badreps` WHERE (target = ? AND author = ?);";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, targetUUID.toString());
+            statement.setString(2, authorUUID.toString());
+
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            logger.warning("addGoodRep/DELETE: " + e.getMessage());
+        }
+
+        try (Connection connection = getConnection()) {
+            if (!(isExists(TableName.GOODREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.AUTHOR_COLUMN, authorUUID.toString()))) return;
+
+            String query = "UPDATE `players` SET `badrep`= badrep - 1 WHERE uuid=?;";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, targetUUID.toString());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            //заглушка
+            logger.warning("addGoodRep/UPDATE-REMOVE: " + e.getMessage());
         }
     }
 
     public void addBadRep(@NotNull UUID targetUUID, @NotNull UUID authorUUID) {
+        try (Connection connection = getConnection()) {
+            if (!(isExists(TableName.PLAYERS_TABLE, TablesColumn.UUID_COLUMN, targetUUID.toString()))) addPlayer(targetUUID);
 
+            String query = "UPDATE `players` SET `badrep`= badrep + 1 WHERE uuid=?;";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, targetUUID.toString());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            //заглушка
+            logger.warning("addBadRep/UPDATE: " + e.getMessage());
+        }
+
+        try (Connection connection = getConnection()){
+            if (!(isExists(TableName.PLAYERS_TABLE, TablesColumn.UUID_COLUMN, targetUUID.toString()))) addPlayer(targetUUID);
+
+            String query = "INSERT INTO `badreps` (target, author) VALUES (?, ?);";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, targetUUID.toString());
+            statement.setString(2, authorUUID.toString());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            logger.warning("addBadRep/INSERT: " + e.getMessage());
+        }
+
+        try (Connection connection = getConnection()) {
+            if (!(isExists(TableName.BADREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.AUTHOR_COLUMN, authorUUID.toString()))) return;
+
+            String query = "DELETE FROM `goodreps` WHERE (target = ? AND author = ?);";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, targetUUID.toString());
+            statement.setString(2, authorUUID.toString());
+
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            logger.warning("addBadRep/DELETE: " + e.getMessage());
+        }
+
+        try (Connection connection = getConnection()) {
+            if (!(isExists(TableName.BADREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.AUTHOR_COLUMN, authorUUID.toString()))) return;
+
+            String query = "UPDATE `players` SET `goodrep`= goodrep - 1 WHERE uuid=?;";
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.setString(1, targetUUID.toString());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            //заглушка
+            logger.warning("addBadRep/UPDATE-REMOVE: " + e.getMessage());
+        }
     }
 
     public int getGoodRep(@NotNull UUID targetUUID) {
@@ -124,7 +196,7 @@ public class MainDatabase {
                 return resultSet.getShort("goodrep");
             }
         } catch (SQLException e) {
-            logger.warning(e.getMessage());
+            logger.warning("getGoodRep: " + e.getMessage());
         }
         return -1;
     }
@@ -139,7 +211,7 @@ public class MainDatabase {
                 return resultSet.getShort("badrep");
             }
         } catch (SQLException e) {
-            logger.warning(e.getMessage());
+            logger.warning("getBadRep: " + e.getMessage());
         }
         return -1;
     }
@@ -148,18 +220,35 @@ public class MainDatabase {
         boolean result = false;
 
         try (Connection connection = getConnection()) {
-            String query = "SELECT * FROM ? WHERE ? = ?;";
+            String query = "SELECT * FROM " + validTableName(table) + " WHERE " + validColumnName(column) + " = ?;";
             PreparedStatement statement = connection.prepareStatement(query);
 
-            statement.setString(1, table.toString().toLowerCase().replace("_table", ""));
-            statement.setString(2, column.toString().toLowerCase().replace("_column", ""));
-            statement.setString(3, param);
+            statement.setString(1, param);
 
             ResultSet resultSet = statement.executeQuery();
             result = resultSet.next();
         } catch (SQLException e) {
             //заглушка
-            logger.warning(e.getMessage());
+            logger.warning("isExists: " + e.getMessage());
+        }
+        return result;
+    }
+
+    public boolean isExists(@NotNull TableName table, @NotNull TablesColumn targetColumn, @NotNull String targetParam, @NotNull TablesColumn authorColumn, @NotNull String authorParam) {
+        boolean result = false;
+
+        try (Connection connection = getConnection()) {
+            String query = "SELECT * FROM " + validTableName(table) +" WHERE " + validColumnName(targetColumn) + " = ? AND " + validColumnName(authorColumn) + " = ?;";
+            PreparedStatement statement = connection.prepareStatement(query);
+
+            statement.setString(1, targetParam);
+            statement.setString(2, authorParam);
+
+            ResultSet resultSet = statement.executeQuery();
+            result = resultSet.next();
+        } catch (SQLException e) {
+            //заглушка
+            logger.warning("isExists: " + e.getMessage());
         }
         return result;
     }
@@ -168,12 +257,10 @@ public class MainDatabase {
         boolean result = false;
 
         try (Connection connection = getConnection()) {
-            String query = "SELECT * FROM ? WHERE ? = ?;";
+            String query = "SELECT * FROM " + validTableName(table) + " WHERE " + validColumnName(column) + " = ?;";
             PreparedStatement statement = connection.prepareStatement(query);
 
-            statement.setString(1, table.toString().toLowerCase().replace("_table", ""));
-            statement.setString(2, column.toString().toLowerCase().replace("_column", ""));
-            statement.setInt(3, param);
+            statement.setInt(1, param);
 
             ResultSet resultSet = statement.executeQuery();
             result = resultSet.next();
@@ -199,5 +286,13 @@ public class MainDatabase {
                 logger.warning("Failed to create the table '" + name + "' , connection aborted, exception: " + e.getMessage());
             }
         }
+    }
+
+    private @NotNull String validTableName(@NotNull TableName table) {
+        return table.toString().toLowerCase().replace("_table", "");
+    }
+
+    private @NotNull String validColumnName(@NotNull TablesColumn column) {
+        return column.toString().toLowerCase().replace("_column", "");
     }
 }

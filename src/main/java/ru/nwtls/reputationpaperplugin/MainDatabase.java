@@ -42,12 +42,12 @@ public class MainDatabase {
                 "badrep TINYINT UNSIGNED NOT NULL" +
                 ");");
         tables.put("goodreps", "CREATE TABLE IF NOT EXISTS goodreps (" +
-                "author VARCHAR(36) NOT NULL PRIMARY KEY," +
-                "target VARCHAR(36) NOT NULL" +
+                "target VARCHAR(36) NOT NULL PRIMARY KEY," +
+                "author VARCHAR(36) NOT NULL" +
                 ");");
         tables.put("badreps", "CREATE TABLE IF NOT EXISTS badreps (" +
-                "author VARCHAR(36) NOT NULL PRIMARY KEY," +
-                "target VARCHAR(36) NOT NULL" +
+                "target VARCHAR(36) NOT NULL PRIMARY KEY," +
+                "author VARCHAR(36) NOT NULL" +
                 ");");
 
         initializeTables(tablesName, tables);
@@ -109,6 +109,9 @@ public class MainDatabase {
         }
         return result;
     }
+
+    //вот это уже в handle()
+    //public boolean hasPreviousDecision(@NotNull String )
 
     private void initializeTables(@NotNull List<String> tablesName, @NotNull HashMap<String, String> tables) {
         for (String name : tablesName) {

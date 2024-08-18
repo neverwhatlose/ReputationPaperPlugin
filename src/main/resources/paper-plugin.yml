@@ -1,6 +1,6 @@
 name: "ReputationPaperPlugin"
 description: "Player's reputation"
-version: "1.1.0"
+version: "1.1.1"
 main: "ru.nwtls.reputationpaperplugin.PluginMain"
 api-version: "1.21"
 author: "nwtls"

@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "ru.nwtls"
-version = "1.2-RELEASE"
+version = "1.2.1-RELEASE"
 
 repositories {
     mavenCentral()

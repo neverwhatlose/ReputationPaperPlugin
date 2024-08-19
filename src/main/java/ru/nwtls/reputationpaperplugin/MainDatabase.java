@@ -1,6 +1,7 @@
 package ru.nwtls.reputationpaperplugin;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.*;
 import java.util.*;
@@ -28,10 +29,17 @@ public class MainDatabase {
         BADREP_COLUMN
     }
 
-    public MainDatabase(@NotNull String url, @NotNull String login, @NotNull String password) {
+    public MainDatabase(@Nullable String url, @Nullable String login, @Nullable String password) throws MainDatabaseException {
+        if (url == null || login == null || password == null) throw new MainDatabaseException("Provided connection configuration to database is incorrect, startup aborted");
         this.url = url;
         this.login = login;
         this.password = password;
+    }
+
+    public static final class MainDatabaseException extends Exception {
+        public MainDatabaseException(String message) {
+            super(message);
+        }
     }
 
     public Connection getConnection() {
@@ -45,7 +53,6 @@ public class MainDatabase {
     }
 
     public void init() {
-        logger.info("Connecting to database...");
         HashMap<String, String> tables = new HashMap<>();
         List<String> tablesName = List.of("players", "goodreps", "badreps");
 
@@ -79,7 +86,6 @@ public class MainDatabase {
 
             statement.executeUpdate();
         } catch (SQLException e) {
-            //заглушка
             logger.warning("addPlayer: " + e.getMessage());
         }
     }
@@ -93,7 +99,6 @@ public class MainDatabase {
             statement.setString(1, targetUUID.toString());
             statement.executeUpdate();
         } catch (SQLException e) {
-            //заглушка
             logger.warning("addGoodRep/UPDATE: " + e.getMessage());
         }
 
@@ -130,7 +135,6 @@ public class MainDatabase {
             statement.setString(1, targetUUID.toString());
             statement.executeUpdate();
         } catch (SQLException e) {
-            //заглушка
             logger.warning("addGoodRep/UPDATE-REMOVE: " + e.getMessage());
         }
     }
@@ -144,7 +148,6 @@ public class MainDatabase {
             statement.setString(1, targetUUID.toString());
             statement.executeUpdate();
         } catch (SQLException e) {
-            //заглушка
             logger.warning("addBadRep/UPDATE: " + e.getMessage());
         }
 
@@ -181,7 +184,6 @@ public class MainDatabase {
             statement.setString(1, targetUUID.toString());
             statement.executeUpdate();
         } catch (SQLException e) {
-            //заглушка
             logger.warning("addBadRep/UPDATE-REMOVE: " + e.getMessage());
         }
     }
@@ -228,7 +230,6 @@ public class MainDatabase {
             ResultSet resultSet = statement.executeQuery();
             result = resultSet.next();
         } catch (SQLException e) {
-            //заглушка
             logger.warning("isExists: " + e.getMessage());
         }
         return result;
@@ -247,7 +248,6 @@ public class MainDatabase {
             ResultSet resultSet = statement.executeQuery();
             result = resultSet.next();
         } catch (SQLException e) {
-            //заглушка
             logger.warning("isExists: " + e.getMessage());
         }
         return result;
@@ -265,7 +265,6 @@ public class MainDatabase {
             ResultSet resultSet = statement.executeQuery();
             result = resultSet.next();
         } catch (SQLException e) {
-            //заглушка
             logger.warning(e.getMessage());
         }
         return result;
@@ -277,15 +276,14 @@ public class MainDatabase {
                 String query = tables.get(name);
                 PreparedStatement statement = connection.prepareStatement(query);
                 statement.executeUpdate();
-                if (statement.getWarnings() != null) {
-                    logger.info("Table '" + name + "' already exists, no creation is required");
-                } else {
+                if (statement.getWarnings() == null) {
                     logger.info("Table '" + name + "' created successfully");
                 }
             } catch (SQLException e) {
                 logger.warning("Failed to create the table '" + name + "' , connection aborted, exception: " + e.getMessage());
             }
         }
+        logger.info("Connection to database established");
     }
 
     private @NotNull String validTableName(@NotNull TableName table) {

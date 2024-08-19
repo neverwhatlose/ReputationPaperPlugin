@@ -26,9 +26,9 @@ public class PluginMain extends JavaPlugin {
         try {
             this.logger.info("Connecting to database...");
             this.mainDatabase = new MainDatabase(
-                    getConfig().getString("main-database.url"),
-                    getConfig().getString("main-database.login"),
-                    getConfig().getString("main-database.password")
+                    this.getConfig().getString("main-database.url"),
+                    this.getConfig().getString("main-database.login"),
+                    this.getConfig().getString("main-database.password")
             );
             this.mainDatabase.init();
         } catch (MainDatabase.MainDatabaseException e) {
@@ -77,4 +77,5 @@ public class PluginMain extends JavaPlugin {
         });
         this.saveDefaultConfig();
     }
+
 }

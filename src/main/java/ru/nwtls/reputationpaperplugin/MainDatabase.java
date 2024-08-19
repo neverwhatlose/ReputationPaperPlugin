@@ -22,7 +22,7 @@ public class MainDatabase {
     //temp or idk
     public enum TablesColumn {
         TARGET_COLUMN,
-        sender_COLUMN,
+        SENDER_COLUMN,
         UUID_COLUMN,
         GOODREP_COLUMN,
         BADREP_COLUMN
@@ -117,7 +117,7 @@ public class MainDatabase {
         }
 
         try (Connection connection = this.getConnection()) {
-            if (!(this.isExists(TableName.BADREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.sender_COLUMN, senderUUID.toString()))) return;
+            if (!(this.isExists(TableName.BADREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.SENDER_COLUMN, senderUUID.toString()))) return;
 
             String query = "DELETE FROM `badreps` WHERE (target = ? AND sender = ?);";
             PreparedStatement statement = connection.prepareStatement(query);
@@ -130,7 +130,7 @@ public class MainDatabase {
         }
 
         try (Connection connection = this.getConnection()) {
-            if (!(this.isExists(TableName.GOODREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.sender_COLUMN, senderUUID.toString()))) return;
+            if (!(this.isExists(TableName.GOODREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.SENDER_COLUMN, senderUUID.toString()))) return;
 
             String query = "UPDATE `players` SET `badrep`= badrep - 1 WHERE uuid=?;";
             PreparedStatement statement = connection.prepareStatement(query);
@@ -166,7 +166,7 @@ public class MainDatabase {
         }
 
         try (Connection connection = this.getConnection()) {
-            if (!(this.isExists(TableName.BADREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.sender_COLUMN, senderUUID.toString()))) return;
+            if (!(this.isExists(TableName.BADREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.SENDER_COLUMN, senderUUID.toString()))) return;
 
             String query = "DELETE FROM `goodreps` WHERE (target = ? AND sender = ?);";
             PreparedStatement statement = connection.prepareStatement(query);
@@ -179,7 +179,7 @@ public class MainDatabase {
         }
 
         try (Connection connection = this.getConnection()) {
-            if (!(this.isExists(TableName.BADREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.sender_COLUMN, senderUUID.toString()))) return;
+            if (!(this.isExists(TableName.BADREPS_TABLE, TablesColumn.TARGET_COLUMN, targetUUID.toString(), TablesColumn.SENDER_COLUMN, senderUUID.toString()))) return;
 
             String query = "UPDATE `players` SET `goodrep`= goodrep - 1 WHERE uuid=?;";
             PreparedStatement statement = connection.prepareStatement(query);

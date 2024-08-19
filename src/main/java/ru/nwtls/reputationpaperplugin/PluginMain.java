@@ -2,29 +2,29 @@ package ru.nwtls.reputationpaperplugin;
 
 import cloud.commandframework.execution.CommandExecutionCoordinator;
 import cloud.commandframework.paper.PaperCommandManager;
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
-import org.bukkit.event.HandlerList;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.NotNull;
-import ru.nwtls.reputationpaperplugin.command.ReputationCommand;
-import ru.nwtls.reputationpaperplugin.listening.EventListener;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.logging.Logger;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
+import org.bukkit.event.HandlerList;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
+import ru.nwtls.reputationpaperplugin.command.ReputationCommand;
+import ru.nwtls.reputationpaperplugin.listening.EventListener;
 
 public class PluginMain extends JavaPlugin {
-    private @NotNull MainDatabase mainDatabase;
+    private MainDatabase mainDatabase;
     private final @NotNull Logger logger = getLogger();
 
     @Override
     public void onEnable() {
-        loadConfig();
+        this.loadConfig();
         try {
-            logger.info("Connecting to database...");
+            this.logger.info("Connecting to database...");
             this.mainDatabase = new MainDatabase(
                     getConfig().getString("main-database.url"),
                     getConfig().getString("main-database.login"),
@@ -32,8 +32,9 @@ public class PluginMain extends JavaPlugin {
             );
             this.mainDatabase.init();
         } catch (MainDatabase.MainDatabaseException e) {
-            logger.warning(e.getMessage());
+            this.logger.warning(e.getMessage());
             Bukkit.getPluginManager().disablePlugin(this);
+            return;
         }
         try {
             PaperCommandManager<CommandSender> commandManager = PaperCommandManager
@@ -41,7 +42,7 @@ public class PluginMain extends JavaPlugin {
 
             ReputationCommand.register(commandManager);
         } catch (Exception e) {
-            logger.warning(e.getMessage());
+            this.logger.warning(e.getMessage());
         }
         Bukkit.getPluginManager().registerEvents(new EventListener(), this);
     }
@@ -59,18 +60,21 @@ public class PluginMain extends JavaPlugin {
         return this.mainDatabase;
     }
 
+    @TestOnly
     public void loadConfig() {
         File configFolder = getDataFolder();
         File[] files = configFolder.listFiles();
-        if (files == null) { saveDefaultConfig(); return; }
+        if (files == null) {
+            this.saveDefaultConfig();
+            return;
+        }
         Arrays.stream(files).forEach(it -> {
             try {
-                Files.delete(it.toPath());
+                if (it.getName().equals("config.yml")) Files.delete(it.toPath());
             } catch (IOException e) {
-                logger.warning("On config load: " + e.getMessage());
+                this.logger.warning("On config load: " + e.getMessage());
             }
         });
-        saveDefaultConfig();
-
+        this.saveDefaultConfig();
     }
 }

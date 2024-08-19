@@ -2,6 +2,10 @@ package ru.nwtls.reputationpaperplugin.command;
 
 import cloud.commandframework.bukkit.parsers.PlayerArgument;
 import cloud.commandframework.paper.PaperCommandManager;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.logging.Logger;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -9,12 +13,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import ru.nwtls.reputationpaperplugin.MainDatabase;
 import ru.nwtls.reputationpaperplugin.PluginMain;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.logging.Logger;
 
 import static ru.nwtls.reputationpaperplugin.util.StyleUtils.*;
 
@@ -58,14 +56,20 @@ public class ReputationCommand {
         );
     }
 
-    private static void handle(@NotNull Player author, @NotNull ReputationType type, @NotNull Player target) {
-        if (hasPreviousDecision(target, author, type)) { author.sendMessage(green("Вы уже оценили этого игрока")); return; }
-        if (author.getUniqueId() == target.getUniqueId()) { author.sendMessage(green("К сожалению, самого себя нельзя оценивать")); return; }
+    private static void handle(@NotNull Player sender, @NotNull ReputationType type, @NotNull Player target) {
+        if (hasPreviousDecision(target, sender, type)) {
+            sender.sendMessage(green("Вы уже оценили этого игрока"));
+            return;
+        }
+        if (sender.getUniqueId() == target.getUniqueId()) {
+            sender.sendMessage(green("К сожалению, самого себя нельзя оценивать"));
+            return;
+        }
 
         switch (type) {
             case GOOD_REPUTATION -> {
-                mainDatabase.addGoodRep(target.getUniqueId(), author.getUniqueId());
-                author.sendMessage(single(
+                mainDatabase.addGoodRep(target.getUniqueId(), sender.getUniqueId());
+                sender.sendMessage(single(
                         gray("Вы изменили репутацию "),
                         yellow(target.getName()),
                         gray(" на "),
@@ -74,8 +78,8 @@ public class ReputationCommand {
                 Bukkit.broadcast(single(green("Репутация игрока " + target.getName() + " была изменена на +1 "), getTotalReputation(target)));
             }
             case BAD_REPUTATION -> {
-                mainDatabase.addBadRep(target.getUniqueId(), author.getUniqueId());
-                author.sendMessage(single(
+                mainDatabase.addBadRep(target.getUniqueId(), sender.getUniqueId());
+                sender.sendMessage(single(
                         gray("Вы изменили репутацию "),
                         yellow(target.getName()),
                         gray(" на "),
@@ -86,7 +90,7 @@ public class ReputationCommand {
         }
     }
 
-    private static void handle(@NotNull Player author, @NotNull Player target) {
+    private static void handle(@NotNull Player sender, @NotNull Player target) {
         int badrep = mainDatabase.getBadRep(target.getUniqueId());
         int goodrep = mainDatabase.getGoodRep(target.getUniqueId());
 
@@ -98,38 +102,35 @@ public class ReputationCommand {
                 red(badrep),
                 getTotalReputation(target)
                 );
-        author.sendMessage(msg);
+        sender.sendMessage(msg);
     }
 
-    private static boolean hasPreviousDecision(@NotNull Player target, @NotNull Player author, @NotNull ReputationType type) {
-        boolean result = false;
+    private static boolean hasPreviousDecision(@NotNull Player target, @NotNull Player sender, @NotNull ReputationType type) {
         switch (type) {
             case GOOD_REPUTATION:
                 try (Connection connection = mainDatabase.getConnection()) {
-                    String query = "SELECT * FROM `goodreps` WHERE (target = ? AND author = ?)";
+                    String query = "SELECT * FROM goodreps WHERE (target = ? AND sender = ?)";
                     PreparedStatement statement = connection.prepareStatement(query);
                     statement.setString(1, target.getUniqueId().toString());
-                    statement.setString(2, author.getUniqueId().toString());
-                    ResultSet resultSet = statement.executeQuery();
-                    result = resultSet.next();
-                    return result;
+                    statement.setString(2, sender.getUniqueId().toString());
+                    return statement.executeQuery().next();
                 } catch (SQLException e) {
                     logger.warning(e.getMessage());
+                    return false;
                 }
             case BAD_REPUTATION:
                 try (Connection connection = mainDatabase.getConnection()) {
-                    String query = "SELECT * FROM `badreps` WHERE (target = ? AND author = ?)";
+                    String query = "SELECT * FROM badreps WHERE (target = ? AND sender = ?)";
                     PreparedStatement statement = connection.prepareStatement(query);
                     statement.setString(1, target.getUniqueId().toString());
-                    statement.setString(2, author.getUniqueId().toString());
-                    ResultSet resultSet = statement.executeQuery();
-                    result = resultSet.next();
-                    return result;
+                    statement.setString(2, sender.getUniqueId().toString());
+                    return statement.executeQuery().next();
                 } catch (SQLException e) {
                     logger.warning(e.getMessage());
+                    return false;
                 }
         }
-        return result;
+        return false;
     }
 
     private static @NotNull Component getTotalReputation(@NotNull Player player) {

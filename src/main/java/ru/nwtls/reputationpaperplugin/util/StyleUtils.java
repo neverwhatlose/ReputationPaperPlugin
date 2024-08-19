@@ -1,5 +1,7 @@
 package ru.nwtls.reputationpaperplugin.util;
 
+import java.util.Arrays;
+import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -12,11 +14,8 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.util.Arrays;
-import java.util.Objects;
 
 public class StyleUtils {
-
     public static @NotNull Component single(@NotNull Component... components) {
         return Component.join(JoinConfiguration.noSeparators(), components);
     }

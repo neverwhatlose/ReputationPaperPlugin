@@ -10,14 +10,13 @@ import cloud.commandframework.captions.CaptionVariable;
 import cloud.commandframework.context.CommandContext;
 import cloud.commandframework.exceptions.parsing.NoInputProvidedException;
 import cloud.commandframework.exceptions.parsing.ParserException;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.function.BiFunction;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class ReputationTypeArgument<C> extends CommandArgument<C, ReputationCommand.ReputationType> {
     private ReputationTypeArgument(final boolean required, final @NonNull String name, final @NonNull String defaultValue, final @Nullable BiFunction<@NonNull CommandContext<C>, @NonNull String, @NonNull List<@NonNull String>> suggestionsProvider, final @NonNull ArgumentDescription defaultDescription) {
@@ -39,7 +38,7 @@ public class ReputationTypeArgument<C> extends CommandArgument<C, ReputationComm
             try {
                 input = input.toLowerCase() + "_reputation";
                 type = ReputationCommand.ReputationType.valueOf(input.toUpperCase());
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) { }
             if (type == null) return ArgumentParseResult.failure(new ReputationTypeParseException(input, commandContext));
 
             inputQueue.remove();

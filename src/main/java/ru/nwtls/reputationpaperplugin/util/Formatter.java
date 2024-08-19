@@ -1,10 +1,9 @@
 package ru.nwtls.reputationpaperplugin.util;
 
+import java.text.SimpleDateFormat;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.text.SimpleDateFormat;
 
 public class Formatter {
     public static @NotNull String locationToString(@Nullable Location location) {

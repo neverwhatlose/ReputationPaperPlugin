@@ -12,6 +12,6 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onJoin(@NotNull PlayerJoinEvent event) {
-        mainDatabase.addPlayer(event.getPlayer().getUniqueId());
+        this.mainDatabase.addPlayer(event.getPlayer().getUniqueId());
     }
 }

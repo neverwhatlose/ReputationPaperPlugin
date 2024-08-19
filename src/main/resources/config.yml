@@ -1,4 +1,4 @@
-main-database:
+main-databases:
     url: "jdbc:mysql://localhost:3306/reputationplugin"
     login: "root"
     password: "vIDr2PTWHqZ-W_KcGidL"

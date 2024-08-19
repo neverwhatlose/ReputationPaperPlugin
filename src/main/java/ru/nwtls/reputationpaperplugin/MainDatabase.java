@@ -10,9 +10,9 @@ import java.util.logging.Logger;
 public class MainDatabase {
     private final @NotNull Logger logger = PluginMain.getInstance().getLogger();
 
-    private final String url;
-    private final String login;
-    private final String password;
+    private final @NotNull String url;
+    private final @NotNull String login;
+    private final @NotNull String password;
 
     public enum TableName {
         PLAYERS_TABLE,
@@ -62,11 +62,11 @@ public class MainDatabase {
                 "badrep TINYINT UNSIGNED NOT NULL" +
                 ");");
         tables.put("goodreps", "CREATE TABLE IF NOT EXISTS goodreps (" +
-                "target VARCHAR(36) NOT NULL PRIMARY KEY," +
+                "target VARCHAR(36) NOT NULL," +
                 "author VARCHAR(36) NOT NULL" +
                 ");");
         tables.put("badreps", "CREATE TABLE IF NOT EXISTS badreps (" +
-                "target VARCHAR(36) NOT NULL PRIMARY KEY," +
+                "target VARCHAR(36) NOT NULL," +
                 "author VARCHAR(36) NOT NULL" +
                 ");");
 

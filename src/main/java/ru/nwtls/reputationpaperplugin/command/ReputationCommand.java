@@ -59,8 +59,8 @@ public class ReputationCommand {
     }
 
     private static void handle(@NotNull Player author, @NotNull ReputationType type, @NotNull Player target) {
-        if(hasPreviousDecision(target, author, type)) { author.sendMessage(green("Вы уже оценили этого игрока")); return; }
-        if(author.getUniqueId() == target.getUniqueId()) { author.sendMessage(green("К сожалению, самого себя нельзя оценивать")); return; }
+        if (hasPreviousDecision(target, author, type)) { author.sendMessage(green("Вы уже оценили этого игрока")); return; }
+        if (author.getUniqueId() == target.getUniqueId()) { author.sendMessage(green("К сожалению, самого себя нельзя оценивать")); return; }
 
         switch (type) {
             case GOOD_REPUTATION -> {
@@ -94,7 +94,7 @@ public class ReputationCommand {
                 gray(target.getName()),
                 yellow(" имеет репутацию: "),
                 green(goodrep),
-                gray("/"),
+                gray("/ "),
                 red(badrep),
                 getTotalReputation(target)
                 );

@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 
 public class PluginMain extends JavaPlugin {
-    private MainDatabase mainDatabase;
+    private @NotNull MainDatabase mainDatabase;
     private final @NotNull Logger logger = getLogger();
 
     @Override
@@ -25,14 +25,15 @@ public class PluginMain extends JavaPlugin {
         loadConfig();
         try {
             logger.info("Connecting to database...");
-            mainDatabase = new MainDatabase(
+            this.mainDatabase = new MainDatabase(
                     getConfig().getString("main-database.url"),
                     getConfig().getString("main-database.login"),
                     getConfig().getString("main-database.password")
             );
-            mainDatabase.init();
+            this.mainDatabase.init();
         } catch (MainDatabase.MainDatabaseException e) {
             logger.warning(e.getMessage());
+            Bukkit.getPluginManager().disablePlugin(this);
         }
         try {
             PaperCommandManager<CommandSender> commandManager = PaperCommandManager
@@ -70,5 +71,6 @@ public class PluginMain extends JavaPlugin {
             }
         });
         saveDefaultConfig();
+
     }
 }
